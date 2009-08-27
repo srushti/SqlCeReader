@@ -24,7 +24,13 @@ namespace SqlCeReader
                 while (true)
                 {
                     Console.WriteLine("What?");
-                    string commandText = Console.ReadLine();
+                    string commandText = Console.ReadLine().Trim();
+                    if(!commandText.ToLower().StartsWith("select"))
+                    {
+                        var count = new SqlCeCommand(commandText, connection).ExecuteNonQuery();
+                        Console.WriteLine("Number of rows affected:\t{0}", count);
+                        continue;
+                    }
                     SqlCeDataReader reader = new SqlCeCommand(commandText, connection).ExecuteReader();
                     int columnCount;
                     for (int i = 0;; i++)
