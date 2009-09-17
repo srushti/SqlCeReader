@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Data.SqlServerCe;
-using System.Windows.Forms;
 
 namespace SqlCeReader
 {
@@ -12,11 +11,8 @@ namespace SqlCeReader
             if (args.Length > 0) fileName = args[0];
             else
             {
-                var dialog = new OpenFileDialog {DefaultExt = "sdf", Multiselect = false};
-                DialogResult result = dialog.ShowDialog();
-                if (result != DialogResult.OK)
-                    return;
-                fileName = dialog.FileName;
+                Console.WriteLine("You need to specify the path to the sdf file as a command-line argument!!");
+                return;
             }
             using (var connection = new SqlCeConnection(string.Format("Data Source={0}", fileName)))
             {
@@ -25,34 +21,45 @@ namespace SqlCeReader
                 {
                     Console.WriteLine("What?");
                     string commandText = Console.ReadLine().Trim();
-                    if(!commandText.ToLower().StartsWith("select"))
+                    if (commandText.Equals("exit") || commandText.Equals("quit")) return;
+                    try
                     {
-                        var count = new SqlCeCommand(commandText, connection).ExecuteNonQuery();
-                        Console.WriteLine("Number of rows affected:\t{0}", count);
-                        continue;
-                    }
-                    SqlCeDataReader reader = new SqlCeCommand(commandText, connection).ExecuteReader();
-                    int columnCount;
-                    for (int i = 0;; i++)
-                    {
-                        try
+                        if (!commandText.ToLower().StartsWith("select"))
                         {
-                            Console.Write("{0}\t", reader.GetName(i));
+                            int count = new SqlCeCommand(commandText, connection).ExecuteNonQuery();
+                            Console.WriteLine("Number of rows affected:\t{0}", count);
+                            continue;
                         }
-                        catch
+                        SqlCeDataReader reader = new SqlCeCommand(commandText, connection).ExecuteReader();
+                        int columnCount;
+                        for (int i = 0;; i++)
                         {
-                            columnCount = i;
-                            break;
-                        }
-                    }
-                    Console.WriteLine();
-                    while (reader.Read())
-                    {
-                        for (int i = 0; i < columnCount; i++)
-                        {
-                            Console.Write("{0}\t", reader.GetValue(i));
+                            try
+                            {
+                                Console.Write("{0}\t", reader.GetName(i));
+                            }
+                            catch
+                            {
+                                columnCount = i;
+                                break;
+                            }
                         }
                         Console.WriteLine();
+                        while (reader.Read())
+                        {
+                            for (int i = 0; i < columnCount; i++)
+                            {
+                                Console.Write("{0}\t", reader.GetValue(i));
+                            }
+                            Console.WriteLine();
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("There was an error!!! What did you do?");
+                        Console.WriteLine("The error details are:");
+                        Console.WriteLine(e);
+                        Console.WriteLine("Let's try to not repeat it shall we!!");
                     }
                 }
             }
